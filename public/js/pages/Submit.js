@@ -160,7 +160,7 @@ export default {
 
                                     <template v-else>
                                         <div v-if="filteredLevels.length === 0" class="no-results type-label-md">
-                                            No levels found! If this is incorrect, please ping Anticroom about this issue! Sorry D:
+                                            No levels found! If this is incorrect, please let the list staff know about this issue.
                                         </div>
                                         <div 
                                             v-for="(level, index) in filteredLevels" 
@@ -198,7 +198,7 @@ export default {
                                 Discord Username 
                                 <span style="opacity: 0.5; display: inline-block;">(Optional)</span>
                                 </label>
-                                <input v-model="formData.discord" type="text" class="type-label-lg" placeholder="e.g. anticroom. or corno927.3" />
+                                <input v-model="formData.discord" type="text" class="type-label-lg" placeholder="e.g. yourname or yourname#1234" />
                                 </div>
                             </div>
 
