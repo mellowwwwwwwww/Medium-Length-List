@@ -1,7 +1,7 @@
 import { fetchList } from '../content.js';
 import { embed, shuffle } from '../util.js';
 import { store } from '../main.js';
-import { LIST1, LIST2 } from '../config.js';
+import { LIST1 } from '../config.js';
 
 import Spinner from '../components/Spinner.js';
 import Btn from '../components/Btn.js';
@@ -25,46 +25,25 @@ export default {
                                 <form class="toggles">
                                     <div class="list-group">
                                         <div class="check">
-                                            <input type="checkbox" id="TPCL" v-model="useTPCL">
-                                            <label for="TPCL" class="type-label-lg">Include {{ store.list1 }}</label>
+                                            <input type="checkbox" id="MLL" v-model="useMLL">
+                                            <label for="MLL" class="type-label-lg">Include {{ store.list1 }}</label>
                                         </div>
-                                        <div class="sub-checks" v-if="useTPCL">
-                                            <div class="check" v-if="hasTPCLMain">
-                                                <input type="checkbox" id="TPCL_main" v-model="useTPCLMain">
-                                                <label for="TPCL_main" class="type-label-md">Main List (1-75)</label>
+                                        <div class="sub-checks" v-if="useMLL">
+                                            <div class="check" v-if="hasMLLMain">
+                                                <input type="checkbox" id="MLL_main" v-model="useMLLMain">
+                                                <label for="MLL_main" class="type-label-md">Main List (1-75)</label>
                                             </div>
-                                            <div class="check" v-if="hasTPCLExtended">
-                                                <input type="checkbox" id="TPCL_ext" v-model="useTPCLExtended">
-                                                <label for="TPCL_ext" class="type-label-md">Extended List (76-150)</label>
+                                            <div class="check" v-if="hasMLLExtended">
+                                                <input type="checkbox" id="MLL_ext" v-model="useMLLExtended">
+                                                <label for="MLL_ext" class="type-label-md">Extended List (76-150)</label>
                                             </div>
-                                            <div class="check" v-if="hasTPCLLegacy">
-                                                <input type="checkbox" id="TPCL_leg" v-model="useTPCLLegacy">
-                                                <label for="TPCL_leg" class="type-label-md">Legacy List (>150)</label>
+                                            <div class="check" v-if="hasMLLLegacy">
+                                                <input type="checkbox" id="MLL_leg" v-model="useMLLLegacy">
+                                                <label for="MLL_leg" class="type-label-md">Legacy List (>150)</label>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="list-group">
-                                        <div class="check">
-                                            <input type="checkbox" id="TPL" v-model="useTPL">
-                                            <label for="TPL" class="type-label-lg">Include {{ store.list2 }}</label>
-                                        </div>
-                                        <div class="sub-checks" v-if="useTPL">
-                                            <div class="check" v-if="hasTPLMain">
-                                                <input type="checkbox" id="tpl_main" v-model="useTPLMain">
-                                                <label for="tpl_main" class="type-label-md">Main List (1-75)</label>
-                                            </div>
-                                            <div class="check" v-if="hasTPLExtended">
-                                                <input type="checkbox" id="tpl_ext" v-model="useTPLExtended">
-                                                <label for="tpl_ext" class="type-label-md">Extended List (76-150)</label>
-                                            </div>
-                                            <div class="check" v-if="hasTPLLegacy">
-                                                <input type="checkbox" id="tpl_leg" v-model="useTPLLegacy">
-                                                <label for="tpl_leg" class="type-label-md">Legacy List (>150)</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
                                     <Btn @click.native.prevent="onStart" class="btn-start" style="margin-top: 8px;">
                                         {{ isActive ? 'Restart' : 'Start' }}
                                     </Btn>
@@ -204,8 +183,7 @@ export default {
     data: () => ({
         loading: true, 
         
-        TPCLLevels: [],
-        TPLLevels: [],
+        MLLLevels: [],
 
         levels: [],
         progression: [],
@@ -213,16 +191,9 @@ export default {
         givenUp: false,
         showRemaining: false,
         
-        useTPL: true,
-        useTPL: false,
-
-        useTPCLMain: true,
-        useTPCLExtended: true,
-        useTPCLLegacy: true,
-
-        useTPLMain: true,
-        useTPLExtended: true,
-        useTPLLegacy: true,
+        useMLLMain: true,
+        useMLLExtended: true,
+        useMLLLegacy: true,
 
         toasts: [],
         fileInput: undefined,
@@ -235,13 +206,10 @@ export default {
         this.fileInput.accept = '.json';
         this.fileInput.addEventListener('change', this.onImportUpload);
 
-        const [TPCLData, TPLData] = await Promise.all([
-            fetchList(LIST1),
-            fetchList(LIST2)
-        ]);
+        const MLLData = await fetchList(LIST1);
 
-        if (TPCLData) {
-            this.TPCLLevels = TPCLData.map(([lvl], index) => {
+        if (MLLData) {
+            this.MLLLevels = MLLData.map(([lvl], index) => {
                 if (!lvl) return null;
                 return {
                     ...lvl,
@@ -252,29 +220,11 @@ export default {
             }).filter(l => l);
         }
 
-        if (TPLData) {
-            this.TPLLevels = TPLData.map(([lvl], index) => {
-                if (!lvl) return null;
-                return {
-                    ...lvl,
-                    listType: LIST2,
-                    rank: index + 1,
-                    video: lvl.verification || lvl.video
-                };
-            }).filter(l => l);
-        }
-
-        if (this.TPCLLevels.length === 0 && this.TPLLevels.length === 0) {
+        if (this.MLLLevels.length === 0) {
             this.showToast('Warning: Failed to load levels.');
         }
         
-        if (this.store.listType === LIST2) {
-            this.useTPCL = false;
-            this.useTPL = true;
-        } else {
-            this.useTPCL = true;
-            this.useTPL = false;
-        }
+        this.useMLL = true;
 
         this.loading = false;
 
@@ -285,13 +235,10 @@ export default {
         }
     },
     computed: {
-        hasTPCLMain() { return this.TPCLLevels.some(l => l.rank <= 75); },
-        hasTPCLExtended() { return this.TPCLLevels.some(l => l.rank > 75 && l.rank <= 150); },
-        hasTPCLLegacy() { return this.TPCLLevels.some(l => l.rank > 150); },
+        hasMLLMain() { return this.MLLLevels.some(l => l.rank <= 75); },
+        hasMLLExtended() { return this.MLLLevels.some(l => l.rank > 75 && l.rank <= 150); },
+        hasMLLLegacy() { return this.MLLLevels.some(l => l.rank > 150); },
 
-        hasTPLMain() { return this.TPLLevels.some(l => l.rank <= 75); },
-        hasTPLExtended() { return this.TPLLevels.some(l => l.rank > 75 && l.rank <= 150); },
-        hasTPLLegacy() { return this.TPLLevels.some(l => l.rank > 150); },
 
         currentLevel() {
             return this.levels[this.progression.length];
@@ -321,30 +268,22 @@ export default {
                 if (!confirm('Give up and restart?')) return;
             }
 
-            if (!this.useTPCL && !this.useTPL) {
+            if (!this.useMLL) {
                 this.showToast('Please select at least one list.');
                 return;
             }
 
             const pool = [];
 
-            if (this.useTPCL) {
-                const TPCLSubset = this.TPCLLevels.filter(l => {
-                    if (l.rank <= 75) return this.useTPCLMain;
-                    if (l.rank <= 150) return this.useTPCLExtended;
-                    return this.useTPCLLegacy;
+            if (this.useMLL) {
+                const MLLSubset = this.MLLLevels.filter(l => {
+                    if (l.rank <= 75) return this.useMLLMain;
+                    if (l.rank <= 150) return this.useMLLExtended;
+                    return this.useMLLLegacy;
                 });
-                pool.push(...TPCLSubset);
+                pool.push(...MLLSubset);
             }
 
-            if (this.useTPL) {
-                const TPLSubset = this.TPLLevels.filter(l => {
-                    if (l.rank <= 75) return this.useTPLMain;
-                    if (l.rank <= 150) return this.useTPLExtended;
-                    return this.useTPLLegacy;
-                });
-                pool.push(...TPLSubset);
-            }
 
             if (pool.length === 0) {
                 this.showToast('No levels matching your criteria.');
