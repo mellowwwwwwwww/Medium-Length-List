@@ -3,7 +3,7 @@ import { LIST1, LIST2 } from './config.js';
 
 export const store = Vue.reactive({
     dark: JSON.parse(localStorage.getItem('dark')) || false,
-    listType: localStorage.getItem('listType') || LIST1,
+    listType: LIST1, // single-list mode: always the first list
     list1: LIST1,
     list2: LIST2,
 
@@ -13,9 +13,10 @@ export const store = Vue.reactive({
     },
 
     setListType(type) {
-        this.listType = type;
-        localStorage.setItem('listType', type);
-        this.updateTheme(type);
+        // single-list mode: ignore requests to switch to the second list
+        this.listType = LIST1;
+        localStorage.setItem('listType', LIST1);
+        this.updateTheme(LIST1);
     },
 
     updateTheme(type) {
