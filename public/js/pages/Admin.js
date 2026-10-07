@@ -1046,7 +1046,7 @@ template: `
         },
 
         createNewPack() {
-            this.editingPack = { name: '', pack_id: '', original_id: null, color: '#d4c217', levels: [] };
+            this.editingPack = { name: '', pack_id: '', original_id: null, color: '#ee6a1f', levels: [] };
             this.packMessage = '';
         },
         selectPack(pack) {
