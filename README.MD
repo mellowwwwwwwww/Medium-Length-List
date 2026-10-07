@@ -97,7 +97,7 @@ Create a `.env` file in your projects root folder. You will need these for local
 JWT_SECRET=[YOURJWTSTRING]
 
 # transaction pooler for the database
-POSTGRES_URL=postgresql://
+DATABASE_URL=postgresql://
 
 # webhooks
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/
