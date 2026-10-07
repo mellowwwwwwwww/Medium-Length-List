@@ -158,7 +158,7 @@ export async function auditLog(decodedUser, action, details) {
                                         body: JSON.stringify({
                                             content: msg,
                                             username: "LIST UPDATES",
-                                            avatar_url: "https://thepisslist.com/list_icon.png"
+                                            avatar_url: "https://medium-length-list.vercel.app/list_icon.png"
                                         })
                                     });
                                 } catch (e) { console.error("Webhook Error (Bulk Level):", e); }
@@ -177,7 +177,7 @@ export async function auditLog(decodedUser, action, details) {
                     body: JSON.stringify({
                         content: publicMsg,
                         username: "LIST UPDATES",
-                        avatar_url: "https://thepisslist.com/list_icon.png"
+                        avatar_url: "https://medium-length-list.vercel.app/list_icon.png"
                     })
                 });
             } catch (e) {
@@ -263,7 +263,7 @@ export async function auditLog(decodedUser, action, details) {
                     body: JSON.stringify({
                         content: completionMsg,
                         username: "Completion Updates",
-                        avatar_url: "https://thepisslist.com/list_icon.png"
+                        avatar_url: "https://medium-length-list.vercel.app/list_icon.png"
                     })
                 });
             } catch (e) {
@@ -422,13 +422,13 @@ export async function auditLog(decodedUser, action, details) {
     }
 
     const payloadJson = {
-        username: "TPL Staff Logs",
-        avatar_url: "https://thepisslist.com/list_icon.png",
+        username: "MLL Staff Logs",
+        avatar_url: "https://medium-length-list.vercel.app/list_icon.png",
         embeds: [{
             title: displayTitle,
             color: embedColor,
             fields: displayFields,
-            footer: { text: `TPL Audit • ${timestamp} UTC` }
+            footer: { text: `MLL Audit • ${timestamp} UTC` }
         }]
     };
 
