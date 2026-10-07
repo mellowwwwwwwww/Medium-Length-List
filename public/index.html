@@ -92,14 +92,6 @@
             <a class="nav__cta type-label-lg mobile-submit" href="#/submit" target="_blank">
                 Submit
             </a>
-            <div class="list-toggle-container">
-                <button @click="switchList(store.list1)" :class="{ 'active-list-btn': store.listType === store.list1 }" class="list-btn type-title-sm">
-                    {{ store.list1 }}
-                </button>
-                <button @click="switchList(store.list2)" :class="{ 'active-list-btn': store.listType === store.list2 }" class="list-btn type-title-sm">
-                    {{ store.list2 }}
-                </button>
-            </div>
         </div>
     </nav>
 </header>
