@@ -1,6 +1,6 @@
 import { store } from "../main.js";
 import { fetchList, fetchPacks, fetchRecords } from "../content.js";
-import { LIST1, LIST2 } from "../config.js";
+import { LIST1 } from "../config.js";
 import { embed } from "../util.js";
 import { score } from "../score.js";
 
@@ -216,8 +216,7 @@ export default {
     `,
     data: () => ({
         packs: [],
-        tpclList: [],
-        tplList: [],
+        mllList: [],
         selectedPackIndex: 0,
         selectedLevelIndex: 0,
         loading: true,
@@ -277,14 +276,12 @@ export default {
         async loadData() {
             this.loading = true;
             try {
-                const [tpcl, tpl, packsData] = await Promise.all([
+                const [mll, packsData] = await Promise.all([
                     fetchList(LIST1, false),
-                    fetchList(LIST2, false),
                     fetchPacks(this.store.listType)
                 ]);
 
-                this.tpclList = tpcl || [];
-                this.tplList = tpl || [];
+                this.mllList = mll || [];
                 this.packs = packsData || [];
             } catch (e) {
                 console.error("Failed to load pack data", e);
@@ -314,10 +311,8 @@ export default {
         getLevelInfo(dbId) {
             if (!dbId) return { name: '', rank: 999, level: null, type: null };
 
-            const primaryList = this.store.listType === LIST2 ? this.tplList : this.tpclList;
-            const secondaryList = this.store.listType === LIST2 ? this.tpclList : this.tplList;
+            const primaryList = this.mllList;
             const primaryType = this.store.listType;
-            const secondaryType = this.store.listType === LIST2 ? LIST1 : LIST2;
 
             const primaryIndex = primaryList.findIndex(([lvl]) => String(lvl?._id) === String(dbId));
             if (primaryIndex !== -1) {
@@ -326,16 +321,6 @@ export default {
                     rank: primaryIndex + 1, 
                     level: primaryList[primaryIndex][0],
                     type: primaryType
-                };
-            }
-
-            const secondaryIndex = secondaryList.findIndex(([lvl]) => String(lvl?._id) === String(dbId));
-            if (secondaryIndex !== -1) {
-                return { 
-                    name: secondaryList[secondaryIndex][0].name, 
-                    rank: secondaryIndex + 1, 
-                    level: secondaryList[secondaryIndex][0],
-                    type: secondaryType
                 };
             }
 
