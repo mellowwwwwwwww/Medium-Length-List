@@ -45,7 +45,7 @@
 .search-input:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(212, 194, 23, 0.1);
+    box-shadow: 0 0 0 3px rgba(238, 106, 31, 0.1);
 }
 
 .page-list .list .level button {
@@ -80,7 +80,7 @@
     background-color: var(--color-primary-level);
     border-color: var(--color-primary);
     color: var(--color-on-primary);
-    box-shadow: 0 2px 8px rgba(212, 194, 23, 0.2);
+    box-shadow: 0 2px 8px rgba(238, 106, 31, 0.2);
 }
 
 .page-list .level-container .level {
