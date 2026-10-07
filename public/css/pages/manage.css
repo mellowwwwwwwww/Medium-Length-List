@@ -243,7 +243,7 @@ input:focus {
     outline: none;
     background-color: var(--color-primary-light);
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(212, 194, 23, 0.1);
+    box-shadow: 0 0 0 3px rgba(238, 106, 31, 0.1);
 }
 
 input::placeholder {
