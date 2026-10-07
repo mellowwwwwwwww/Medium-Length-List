@@ -6,10 +6,10 @@
     --color-background-hover: #1a1a1a;
     --color-on-background-hover: #f0f0f0;
 
-    --color-primary: #d4c217;
-    --color-primary-level: #fff389;
-    --color-primary-light: #2a2815;
-    --color-primary-hover: #e8d80a;
+    --color-primary: #ee6a1f;
+    --color-primary-level: #ffb98a;
+    --color-primary-light: #2b1710;
+    --color-primary-hover: #ff7d33;
     --color-primary-disabled: #1f213c;
     --color-on-primary: #1a1a1a;
 
@@ -177,6 +177,9 @@ input[type="checkbox"] {
     }
     
     main>div {
+        overflow-y: visible;
+    }
+}
         overflow-y: visible;
     }
 }
