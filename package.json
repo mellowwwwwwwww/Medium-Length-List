@@ -1,7 +1,7 @@
 {
-  "name": "the-piss-list",
+  "name": "medium-length-list",
   "version": "2.0.3",
-  "description": "The Piss List website",
+  "description": "Medium Length List (MLL) website",
   "scripts": {
     "build": "echo 'Static site'"
   },
