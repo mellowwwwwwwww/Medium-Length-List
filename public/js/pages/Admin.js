@@ -104,7 +104,8 @@ template: `
                 <div v-else-if="isEditingLevelMobile && editingLevel">
                     <div class="admin-form">
                         <div class="form-group"><label>Name</label><input v-model="editingLevel.name"></div>
-                        <div class="form-group"><label>Author</label><input v-model="editingLevel.author"></div>
+                        <div class="form-group"><label>Author <span style="opacity:.6">(GD account it was published on)</span></label><input v-model="editingLevel.author"></div>
+                        <div class="form-group"><label>Creators <span style="opacity:.6">(leave blank if same as author)</span></label><input v-model="editingLevel.creatorsText" type="text" placeholder="Creator1, Creator2..." /></div>
                         <div class="form-group"><label>Verifier</label><input v-model="editingLevel.verifier"></div>
                         <div class="form-group"><label>ID</label><input v-model.number="editingLevel.id"></div>
                         <div class="form-group"><label>Video</label><input v-model="editingLevel.verification"></div>
@@ -137,7 +138,8 @@ template: `
                             </div>
                             <div class="form-group"><label>Name</label><input v-model="formData.name" type="text" required /></div>
                             <div class="form-group"><label>ID</label><input v-model.number="formData.id" type="number" required /></div>
-                            <div class="form-group"><label>Author</label><input v-model="formData.author" type="text" placeholder="Name, Name2..." required /></div>
+                            <div class="form-group"><label>Author <span style="opacity:.6">(GD account it was published on)</span></label><input v-model="formData.author" type="text" placeholder="Publisher account name" required /></div>
+                            <div class="form-group"><label>Creators <span style="opacity:.6">(leave blank if same as author)</span></label><input v-model="formData.creatorsText" type="text" placeholder="Creator1, Creator2..." /></div>
                             <div class="form-group"><label>Verifier</label><input v-model="formData.verifier" type="text" required /></div>
                             <div class="form-group"><label>Video</label><input v-model="formData.verification" type="text" placeholder="https://youtu.be/..." required /></div>
                             <div style="display:flex; gap:10px;">
@@ -413,7 +415,8 @@ template: `
                 <div class="modal-scroll-area">
                     <div class="admin-form">
                         <div><label>Name</label><input v-model="editingLevel.name"></div>
-                        <div><label>Author</label><input v-model="editingLevel.author"></div>
+                        <div><label>Author <span style="opacity:.6">(GD account it was published on)</span></label><input v-model="editingLevel.author"></div>
+                        <div><label>Creators <span style="opacity:.6">(leave blank if same as author)</span></label><input v-model="editingLevel.creatorsText" placeholder="Creator1, Creator2..."></div>
                         <div><label>Verifier</label><input v-model="editingLevel.verifier"></div>
                         <div><label>ID</label><input v-model.number="editingLevel.id"></div>
                         <div><label>Video</label><input v-model="editingLevel.verification"></div>
@@ -504,7 +507,7 @@ template: `
             targetRank: null,
             isEditingLevelMobile: false,
 
-            levelsList: [], searchQuery: '', formData: { id: null, name: '', author: '', verifier: '', verification: '', percentToQualify: 100, password: 'free Copyable', records: [], creators: [], placement: null },
+            levelsList: [], searchQuery: '', formData: { id: null, name: '', author: '', verifier: '', verification: '', percentToQualify: 100, password: 'free Copyable', records: [], creators: [], creatorsText: '', placement: null },
             showRecords: false, isSubmitting: false, successMessage: '', errorMessage: '',
 
             packsList: [],
@@ -1253,6 +1256,14 @@ template: `
         addToPack(level) { const exists = this.editingPack.levels.find(l => l._id === level._id); if (!exists) this.editingPack.levels.push(level); },
         removeFromPack(index) { this.editingPack.levels.splice(index, 1); },
 
+        parseNameList(text) {
+            const seen = new Set();
+            return String(text || '').split(',').map(n => n.trim()).filter(n => {
+                const k = n.toLowerCase();
+                if (!n || seen.has(k)) return false;
+                seen.add(k); return true;
+            });
+        },
         getOriginalIndex(level) { return this.levelsList.findIndex(l => l._id === level._id) + 1; },
         toggleRecordSection() { this.showRecords = !this.showRecords; },
         addRecord() { this.formData.records.push({ user: '', link: '', percent: 100, hz: 60 }); },
@@ -1262,12 +1273,9 @@ template: `
             this.isSubmitting = true; this.errorMessage = '';
 
             let levelData = { ...this.formData };
-            const authors = levelData.author.split(',').map(a => a.trim()).filter(a => a);
-
-            if (authors.length > 1) {
-                levelData.creators = authors;
-                levelData.author = authors;
-            }
+            levelData.author = String(levelData.author || '').trim();
+            levelData.creators = this.parseNameList(levelData.creatorsText);
+            delete levelData.creatorsText;
 
             const payload = {
                 levelData: levelData,
@@ -1281,7 +1289,7 @@ template: `
                 if (res.status === 401) { this.logout(); return; }
                 if (res.ok) {
                     this.successMessage = "Added!";
-                    this.formData = { id: null, name: '', author: '', verifier: '', verification: '', percentToQualify: 100, password: 'free Copyable', records: [], creators: [], placement: null };
+                    this.formData = { id: null, name: '', author: '', verifier: '', verification: '', percentToQualify: 100, password: 'free Copyable', records: [], creators: [], creatorsText: '', placement: null };
                     await this.refreshLevels();
                     this.isMobileSidebarOpen = false;
                 } else {
@@ -1389,6 +1397,7 @@ template: `
         openEditRecordsModal(level) {
             this.editingRecordsLevel = level;
             this.editingLevel = JSON.parse(JSON.stringify(level));
+            this.editingLevel.creatorsText = (Array.isArray(level.creators) ? level.creators : []).join(', ');
             if (!this.editingLevel.records) this.editingLevel.records = [];
             
             if (window.innerWidth <= 1024) {
@@ -1410,7 +1419,7 @@ template: `
         },
 
         addEditingRecord() { this.editingLevel.records.push({ user: '', link: '', percent: 100, hz: 60 }); },
-        async saveEditLevel() { this.isSavingRecords = true; this.editRecordsMessage = ''; this.editRecordsError = false; let newLevelData = { ...this.editingLevel }; delete newLevelData._id; delete newLevelData.rank; const authors = newLevelData.author.split(',').map(a => a.trim()).filter(a => a); if (authors.length > 1) { newLevelData.creators = authors; newLevelData.author = authors; } else { delete newLevelData.creators; } try { const res = await fetch('/api/update-records', { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify({ oldLevelId: this.editingRecordsLevel._id, newLevelData: newLevelData, type: this.store.listType }) }); if (res.status === 401) { this.logout(); return; } const data = await res.json(); if (res.ok) { this.editRecordsMessage = data.message || '✓ Level updated successfully'; this.editRecordsError = false; await new Promise(resolve => setTimeout(resolve, 1500)); await this.refreshLevels(); this.closeEditRecordsModal(); } else { this.editRecordsMessage = data.error || 'Failed to update level'; this.editRecordsError = true; } } catch (e) { this.editRecordsMessage = e.message || 'An error occurred'; this.editRecordsError = true; } finally { this.isSavingRecords = false; } },
+        async saveEditLevel() { this.isSavingRecords = true; this.editRecordsMessage = ''; this.editRecordsError = false; let newLevelData = { ...this.editingLevel }; delete newLevelData._id; delete newLevelData.rank; newLevelData.author = Array.isArray(newLevelData.author) ? newLevelData.author.join(', ') : String(newLevelData.author || '').trim(); newLevelData.creators = this.parseNameList(newLevelData.creatorsText); delete newLevelData.creatorsText; try { const res = await fetch('/api/update-records', { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify({ oldLevelId: this.editingRecordsLevel._id, newLevelData: newLevelData, type: this.store.listType }) }); if (res.status === 401) { this.logout(); return; } const data = await res.json(); if (res.ok) { this.editRecordsMessage = data.message || '✓ Level updated successfully'; this.editRecordsError = false; await new Promise(resolve => setTimeout(resolve, 1500)); await this.refreshLevels(); this.closeEditRecordsModal(); } else { this.editRecordsMessage = data.error || 'Failed to update level'; this.editRecordsError = true; } } catch (e) { this.editRecordsMessage = e.message || 'An error occurred'; this.editRecordsError = true; } finally { this.isSavingRecords = false; } },
 
         async openVipsModal() {
             this.showVipsModal = true;
