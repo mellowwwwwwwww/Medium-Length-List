@@ -289,6 +289,16 @@ async function handleGetSubmissions(req, res, decoded) {
     }
 }
 
+async function findLevelRank(levelName, targetList) {
+    const preferred = targetList === LIST2 ? 'public.levels_2' : 'public.levels';
+    const fallback = preferred === 'public.levels' ? 'public.levels_2' : 'public.levels';
+    for (const table of [preferred, fallback]) {
+        const result = await query(`SELECT rank FROM ${table} WHERE name = $1`, [levelName]);
+        if (result.rows.length > 0) return result.rows[0].rank;
+    }
+    return null;
+}
+
 async function processSingleSubmission(submission, subAction, reason, overrides, decoded) {
     const submissionType = submission.submission_type || 'record';
     const targetList = submission.list_type || LIST1;
@@ -375,7 +385,7 @@ async function processSingleSubmission(submission, subAction, reason, overrides,
             const preferredTable = targetList === LIST2 ? 'public.levels_2' : 'public.levels';
 
             let levelResult = await query(
-                `SELECT id, data, name FROM ${preferredTable} WHERE name = $1`,
+                `SELECT id, data, name, rank FROM ${preferredTable} WHERE name = $1`,
                 [submission.level_name]
             );
 
@@ -385,7 +395,7 @@ async function processSingleSubmission(submission, subAction, reason, overrides,
             } else {
                 const fallbackTable = preferredTable === 'public.levels' ? 'public.levels_2' : 'public.levels';
                 levelResult = await query(
-                    `SELECT id, data, name FROM ${fallbackTable} WHERE name = $1`,
+                    `SELECT id, data, name, rank FROM ${fallbackTable} WHERE name = $1`,
                     [submission.level_name]
                 );
                 if (levelResult.rows.length > 0) {
@@ -423,16 +433,20 @@ async function processSingleSubmission(submission, subAction, reason, overrides,
                 ['approved', decoded.username, submission.id]
             );
 
-            return { type: 'record', levelName: submission.level_name, username: finalUsername, percent: finalPercent };
+            return { type: 'record', levelName: submission.level_name, username: finalUsername, percent: finalPercent, hz: finalHz || null, rank: levelData ? levelData.rank : null, videoLink: finalVideoLink, discord: submission.discord };
         }
 
     } else if (subAction === 'deny') {
+        let deniedRank = null;
+        if (submissionType !== 'level') {
+            try { deniedRank = await findLevelRank(submission.level_name, targetList); } catch (e) { console.error('Rank lookup failed:', e); }
+        }
         await query(
             `UPDATE public.submissions SET status = $1, denial_reason = $2, reviewed_by = $3, reviewed_at = NOW() WHERE id = $4`,
             ['denied', reason || null, decoded.username, submission.id]
         );
 
-        return { type: submissionType, name: submissionType === 'level' ? submission.name : submission.level_name, username: submission.username, percent: submission.percent };
+        return { type: submissionType, name: submissionType === 'level' ? submission.name : submission.level_name, username: submission.username, percent: submission.percent, hz: submission.hz || null, rank: deniedRank, videoLink: submission.video_link, discord: submission.discord };
     }
 }
 
@@ -518,7 +532,12 @@ async function handleProcessSubmission(req, res, decoded) {
                     submissionId: id,
                     levelName: detail.levelName,
                     username: detail.username,
-                    percent: detail.percent
+                    percent: detail.percent,
+                    hz: detail.hz,
+                    rank: detail.rank,
+                    note: reason || undefined,
+                    videoLink: detail.videoLink,
+                    discord: detail.discord
                 });
             }
         } else if (subAction === 'deny') {
@@ -528,6 +547,10 @@ async function handleProcessSubmission(req, res, decoded) {
                 name: detail.name,
                 username: detail.username,
                 percent: detail.percent,
+                hz: detail.hz,
+                rank: detail.rank,
+                videoLink: detail.videoLink,
+                discord: detail.discord,
                 reason: reason || 'No reason provided'
             });
         }
