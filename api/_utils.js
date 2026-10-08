@@ -74,6 +74,73 @@ export async function verifyToken(req) {
     }
 }
 
+// ---- Records channel helpers --------------------------------------------------
+const RECORDS_BOT_NAME = "MLL Manager";
+const RECORDS_BOT_AVATAR = "https://medium-length-list.vercel.app/list_icon.png";
+const MAX_DETAILED_BULK_POSTS = 6; // keeps bulk approvals inside the serverless time limit
+
+// Discord can only ping by numeric user ID. A plain username is shown as text (no ping).
+function mentionLine(raw) {
+    const v = String(raw || '').trim().replace(/^@/, '').replace(/[`\r\n]/g, '');
+    if (!v) return '';
+    if (/^\d{17,20}$/.test(v)) return `<@${v}>`;
+    return '@' + v.slice(0, 40).replace(/([*_~|>\\])/g, '\\$1');
+}
+
+function videoUrl(link) {
+    const v = String(link || '').trim();
+    return /^https?:\/\//i.test(v) ? v : '';
+}
+
+async function postWebhook(url, body) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (res.status === 429) {
+            const info = await res.json().catch(() => ({}));
+            await new Promise(r => setTimeout(r, Math.ceil((info.retry_after || 1) * 1000) + 100));
+            continue;
+        }
+        if (!res.ok) console.error(`Webhook failed with status ${res.status}`);
+        return res.ok;
+    }
+    return false;
+}
+
+// Posts: [ping line + embed]  then  [video link, so Discord shows its preview underneath]
+async function sendRecordResult(url, r) {
+    const fields = [{ name: 'Record holder', value: String(r.username || 'Unknown').slice(0, 1024), inline: true }];
+    if (r.percent !== undefined && r.percent !== null) fields.push({ name: 'Percent', value: `${r.percent}%`, inline: true });
+    if (r.hz) fields.push({ name: 'FPS/Hz', value: String(r.hz).slice(0, 1024), inline: true });
+    if (r.notes) fields.push({ name: 'Notes', value: String(r.notes).slice(0, 1024), inline: false });
+
+    const rank = r.rank ? `[#${r.rank}] ` : '';
+    const embed = {
+        title: `${r.accepted ? '✅' : '❌'} ${rank}${r.levelName || 'Unknown Level'}`.slice(0, 256),
+        description: r.accepted ? 'Accepted' : 'Denied',
+        color: r.accepted ? 0x2ECC71 : 0xED4245,
+        fields
+    };
+
+    const mention = mentionLine(r.discord);
+    const first = {
+        username: RECORDS_BOT_NAME,
+        avatar_url: RECORDS_BOT_AVATAR,
+        embeds: [embed],
+        allowed_mentions: { parse: ['users'] }
+    };
+    if (mention) first.content = mention;
+    await postWebhook(url, first);
+
+    const vid = videoUrl(r.videoLink);
+    if (vid) {
+        await postWebhook(url, { username: RECORDS_BOT_NAME, avatar_url: RECORDS_BOT_AVATAR, content: vid, allowed_mentions: { parse: [] } });
+    }
+}
+
 export async function auditLog(decodedUser, action, details) {
     if (!decodedUser || !decodedUser.username) return;
 
@@ -187,88 +254,75 @@ export async function auditLog(decodedUser, action, details) {
     }
 
     if (DISCORD_COMPLETION_WEBHOOK_URL) {
-        let completionMsg = null;
+        const posts = [];     // record results, posted in the embed style
+        let textMsg = null;   // plain lines (removed records, overflow from large bulk actions)
 
         if (action === "EDIT_LEVEL") {
             try {
                 const oldRecs = details.oldLevel?.records || [];
                 const newRecs = details.newLevel?.records || [];
                 const levelName = details.newLevel?.name || "Unknown Level";
-                const rankStr = details.rank ? `#${details.rank}` : "#???";
 
                 const oldMap = new Map(oldRecs.map(r => [r.user?.toLowerCase(), r.user]));
                 const newMap = new Map(newRecs.map(r => [r.user?.toLowerCase(), r.user]));
 
-                const addedUsers = [];
-                const removedUsers = [];
-
                 newRecs.forEach(r => {
-                    if (!oldMap.has(r.user?.toLowerCase())) addedUsers.push(r.user);
+                    if (!oldMap.has(r.user?.toLowerCase())) {
+                        posts.push({ accepted: true, rank: details.rank, levelName, username: r.user, percent: r.percent, hz: r.hz, videoLink: r.link });
+                    }
                 });
 
+                const removedUsers = [];
                 oldRecs.forEach(r => {
                     if (!newMap.has(r.user?.toLowerCase())) removedUsers.push(r.user);
                 });
-
-                const messages = [];
-                if (addedUsers.length > 0) {
-                    const userList = addedUsers.length > 1
-                        ? addedUsers.slice(0, -1).join(', ') + ', and ' + addedUsers[addedUsers.length - 1]
-                        : addedUsers[0];
-                    messages.push(`Added ${userList}'s record${addedUsers.length > 1 ? 's' : ''} for ${levelName} **${rankStr}**`);
-                }
                 if (removedUsers.length > 0) {
+                    const rankStr = details.rank ? `#${details.rank}` : "#???";
                     const userList = removedUsers.length > 1
                         ? removedUsers.slice(0, -1).join(', ') + ', and ' + removedUsers[removedUsers.length - 1]
                         : removedUsers[0];
-                    messages.push(`Removed ${userList}'s record${removedUsers.length > 1 ? 's' : ''} from ${levelName} **${rankStr}**`);
+                    textMsg = `Removed ${userList}'s record${removedUsers.length > 1 ? 's' : ''} from ${levelName} **${rankStr}**`;
                 }
-                if (messages.length > 0) completionMsg = messages.join('\n');
             } catch (e) {
                 console.error("Webhook Error (EDIT_LEVEL Diff):", e);
             }
         }
         else if (action === "APPROVE_RECORD_SUBMISSION" || action === "APPROVE_SUBMISSION") {
             if (details.username && details.percent !== undefined) {
-                completionMsg = `Added **${details.username}**'s record for **${details.levelName}** (${details.percent}%)`;
+                posts.push({ accepted: true, rank: details.rank, levelName: details.levelName, username: details.username, percent: details.percent, hz: details.hz, notes: details.note, discord: details.discord, videoLink: details.videoLink });
             }
         }
         else if (action === "DENY_SUBMISSION" && details.type !== 'level') {
-            completionMsg = `Denied **${details.username}**'s record for **${details.name}** (${details.percent}%)\nReason: ${details.reason}`;
+            posts.push({ accepted: false, rank: details.rank, levelName: details.name, username: details.username, percent: details.percent, hz: details.hz, notes: details.reason, discord: details.discord, videoLink: details.videoLink });
         }
         else if (action === "BULK_PROCESS") {
-            const actionVerb = details.action === 'approve' ? 'Approved' : 'Denied';
-            const reasonStr = details.reason ? `\n\nReason: ${details.reason}` : '';
+            const accepted = details.action === 'approve';
+            const recordsOnly = (details.submissions || []).filter(s => s.type !== 'level');
 
-            // Filter to ONLY include records
-            const recordsOnly = details.submissions.filter(s => s.type !== 'level');
+            recordsOnly.slice(0, MAX_DETAILED_BULK_POSTS).forEach(s => {
+                posts.push({ accepted, rank: s.rank, levelName: s.levelName || s.name, username: s.username, percent: s.percent, hz: s.hz, notes: details.reason, discord: s.discord, videoLink: s.videoLink });
+            });
 
-            if (recordsOnly.length > 0) {
-                const lines = recordsOnly.map(s => {
-                    return `Record: ${s.username} on ${s.levelName || s.name} (${s.percent}%)`;
-                });
-
-                let list = lines.join('\n');
+            const rest = recordsOnly.slice(MAX_DETAILED_BULK_POSTS);
+            if (rest.length > 0) {
+                let list = rest.map(s => `Record: ${s.username} on ${s.levelName || s.name} (${s.percent}%)`).join('\n');
                 if (list.length > 1500) list = list.substring(0, 1490) + '...';
-
-                completionMsg = `**Records ${actionVerb}:**\n${list}${reasonStr}`;
+                textMsg = `**${rest.length} more record${rest.length > 1 ? 's' : ''} ${accepted ? 'approved' : 'denied'}:**\n${list}`;
             }
         }
 
-        if (completionMsg) {
-            try {
-                await fetch(DISCORD_COMPLETION_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        content: completionMsg,
-                        username: "Completion Updates",
-                        avatar_url: "https://medium-length-list.vercel.app/list_icon.png"
-                    })
+        try {
+            for (const p of posts) await sendRecordResult(DISCORD_COMPLETION_WEBHOOK_URL, p);
+            if (textMsg) {
+                await postWebhook(DISCORD_COMPLETION_WEBHOOK_URL, {
+                    content: textMsg,
+                    allowed_mentions: { parse: [] },
+                    username: RECORDS_BOT_NAME,
+                    avatar_url: RECORDS_BOT_AVATAR
                 });
-            } catch (e) {
-                console.error("Webhook Error (Completion Webhook):", e);
             }
+        } catch (e) {
+            console.error("Webhook Error (Completion Webhook):", e);
         }
     }
 
