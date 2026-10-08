@@ -6,6 +6,8 @@ const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 const DISCORD_UPDATE_WEBHOOK_URL = process.env.DISCORD_UPDATE_WEBHOOK_URL;
 const DISCORD_UPDATE_WEBHOOK_URL_2 = process.env.DISCORD_UPDATE_WEBHOOK_URL_2;
 const DISCORD_COMPLETION_WEBHOOK_URL = process.env.DISCORD_COMPLETION_WEBHOOK_URL;
+const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;   // optional: lets the records bot turn usernames into pings
+const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID;     // optional: your Discord server's ID
 
 function buildChangesDiff(oldData, newData) {
     let diffs = [];
@@ -87,6 +89,39 @@ function mentionLine(raw) {
     return '@' + v.slice(0, 40).replace(/([*_~|>\\])/g, '\\$1');
 }
 
+// Turns what the player typed into something Discord can ping.
+// Numeric ID -> ping. Username -> looked up in your server if the bot is set up. Otherwise plain text.
+async function resolveMention(raw) {
+    const cleaned = String(raw || '').trim().replace(/^@/, '').replace(/[`\r\n]/g, '');
+    if (!cleaned) return '';
+    if (/^\d{17,20}$/.test(cleaned)) return `<@${cleaned}>`;
+
+    if (DISCORD_BOT_TOKEN && DISCORD_GUILD_ID) {
+        const name = cleaned.split('#')[0].trim().toLowerCase();   // also copes with old name#1234 style
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 2500);
+        try {
+            const res = await fetch(
+                `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/search?query=${encodeURIComponent(name)}&limit=10`,
+                { headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` }, signal: controller.signal }
+            );
+            if (res.ok) {
+                const members = await res.json();
+                // exact username match only, so we never ping the wrong person
+                const hit = members.find(m => m.user?.username?.toLowerCase() === name);
+                if (hit) return `<@${hit.user.id}>`;
+            } else {
+                console.error(`Discord member lookup failed with status ${res.status}`);
+            }
+        } catch (e) {
+            console.error('Discord member lookup error:', e.name === 'AbortError' ? 'timed out' : e);
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+    return mentionLine(cleaned);
+}
+
 function videoUrl(link) {
     const v = String(link || '').trim();
     return /^https?:\/\//i.test(v) ? v : '';
@@ -125,7 +160,7 @@ async function sendRecordResult(url, r) {
         fields
     };
 
-    const mention = mentionLine(r.discord);
+    const mention = await resolveMention(r.discord);
     const first = {
         username: RECORDS_BOT_NAME,
         avatar_url: RECORDS_BOT_AVATAR,
@@ -271,18 +306,6 @@ export async function auditLog(decodedUser, action, details) {
                         posts.push({ accepted: true, rank: details.rank, levelName, username: r.user, percent: r.percent, hz: r.hz, videoLink: r.link });
                     }
                 });
-
-                const removedUsers = [];
-                oldRecs.forEach(r => {
-                    if (!newMap.has(r.user?.toLowerCase())) removedUsers.push(r.user);
-                });
-                if (removedUsers.length > 0) {
-                    const rankStr = details.rank ? `#${details.rank}` : "#???";
-                    const userList = removedUsers.length > 1
-                        ? removedUsers.slice(0, -1).join(', ') + ', and ' + removedUsers[removedUsers.length - 1]
-                        : removedUsers[0];
-                    textMsg = `Removed ${userList}'s record${removedUsers.length > 1 ? 's' : ''} from ${levelName} **${rankStr}**`;
-                }
             } catch (e) {
                 console.error("Webhook Error (EDIT_LEVEL Diff):", e);
             }
