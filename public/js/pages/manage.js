@@ -205,7 +205,7 @@ export default {
                                             <button class="btn-icon" @click="openEditModal(user)" title="Edit User">✎</button>
                                             
                                             <button 
-                                                v-if="isDeveloper"
+                                                v-if="canManageOwners"
                                                 class="btn-icon warn" 
                                                 @click="initiateRoleChange(user)" 
                                                 title="Change Role"
@@ -290,7 +290,7 @@ export default {
                                 → Move to Mod
                             </button>
                             <button 
-                                v-if="currentTab !== 'management' && isDeveloper"
+                                v-if="currentTab !== 'management' && canManageOwners"
                                 @click="changeToRole('management')" 
                                 class="btn-primary" 
                                 :disabled="isSaving"
@@ -414,7 +414,8 @@ export default {
         };
     },
     computed: {
-        isDeveloper() { return this.currentUser && this.currentUser.trim().toLowerCase() === 'anticroom'; },
+        // This page only loads for owners (role 'management'), so any logged-in user here may edit the owners list.
+        canManageOwners() { return !!this.currentUser; },
         currentList() { 
             if (this.currentTab === 'management') return this.managementList;
             if (this.currentTab === 'admin') return this.adminList;
@@ -577,7 +578,7 @@ export default {
             const cleanAdmins = this.adminList.map(({ showCredentials, ...rest }) => rest);
             const cleanMods = this.modList.map(({ showCredentials, ...rest }) => rest);
             let payload = { admins: cleanAdmins, mods: cleanMods };
-            if (this.isDeveloper) payload.management = this.managementList.map(({ showCredentials, ...rest }) => rest);
+            if (this.canManageOwners) payload.management = this.managementList.map(({ showCredentials, ...rest }) => rest);
             try {
                 const response = await fetch('/api/manage-users', { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify(payload) });
                 if (!response.ok) throw new Error('Failed to save');
