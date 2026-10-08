@@ -54,6 +54,7 @@ export default async function handler(req, res) {
             if (!Array.isArray(newAdmins)) return res.status(400).json({ error: 'Invalid admin data' });
             if (!Array.isArray(newMods)) return res.status(400).json({ error: 'Invalid mod data' });
             if (!Array.isArray(newManagement)) return res.status(400).json({ error: 'Invalid management data' });
+            if (newManagement.length === 0) return res.status(400).json({ error: 'There must be at least one owner' });
 
             const allUsers = [...newManagement, ...newAdmins, ...newMods];
             const seenUsernames = new Set();
