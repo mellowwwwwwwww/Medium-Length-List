@@ -343,7 +343,7 @@ async function processSingleSubmission(submission, subAction, reason, overrides,
                 verifier: finalVerifier || null,
                 verification: finalVerification,
                 percentToQualify: finalPercentToQualify || 100,
-                password: "free Copyable",
+                inGameDifficulty: "",
                 records: [],
                 _id: newLevelUUID,
                 rank: targetRank
