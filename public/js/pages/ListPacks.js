@@ -1,7 +1,7 @@
 import { store } from "../main.js";
 import { fetchList, fetchPacks, fetchRecords } from "../content.js";
 import { LIST1 } from "../config.js";
-import { embed } from "../util.js";
+import { embed, localize } from "../util.js";
 import { score } from "../score.js";
 
 import LevelAuthors from "../components/List/LevelAuthors.js";
@@ -164,9 +164,9 @@ export default {
                         
                         <ul class="stats">
                             <li>
-                                <div class="type-title-sm">Points when completed</div>
+                                <div class="type-title-sm">Points</div>
                                 <p class="type-body" :style="getLevelInfo(selectedLevel._id).rank > 150 ? 'color: var(--color-text-minus)' : ''">
-                                    {{ getLevelScore(selectedLevel._id) }}
+                                    {{ localize(getLevelScore(selectedLevel._id)) }}
                                 </p>
                             </li>
                             <li>
@@ -259,7 +259,7 @@ export default {
             this.selectedPack.levels.forEach(dbId => {
                 totalPoints += this.getLevelScore(dbId);
             });
-            return (totalPoints * 0.33).toFixed(2);
+            return (totalPoints * 0.33).toFixed(1);
         }
     },
     async mounted() {
@@ -273,6 +273,7 @@ export default {
     methods: {
         embed,
         score,
+        localize,
         async loadData() {
             this.loading = true;
             try {
