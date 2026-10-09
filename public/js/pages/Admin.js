@@ -109,6 +109,7 @@ template: `
                         <div class="form-group"><label>Verifier</label><input v-model="editingLevel.verifier"></div>
                         <div class="form-group"><label>ID</label><input v-model.number="editingLevel.id"></div>
                         <div class="form-group"><label>Video</label><input v-model="editingLevel.verification"></div>
+                        <div class="form-group"><label>In-Game Difficulty <span style="opacity:.6">(pick one or type your own)</span></label><input v-model="editingLevel.inGameDifficulty" type="text" list="gd-diff-edit-m" placeholder="e.g. Extreme Demon"><datalist id="gd-diff-edit-m"><option value="Easy Demon"></option><option value="Medium Demon"></option><option value="Hard Demon"></option><option value="Insane Demon"></option><option value="Extreme Demon"></option></datalist></div>
                         <div class="form-group"><label>Percent</label><input v-model="editingLevel.percentToQualify"></div>
                         
                         <h3 style="margin-top:1.5rem; font-size: 1rem; border-bottom: 1px solid var(--color-border); padding-bottom: 5px;">Records</h3>
@@ -142,6 +143,7 @@ template: `
                             <div class="form-group"><label>Creators <span style="opacity:.6">(leave blank if same as author)</span></label><input v-model="formData.creatorsText" type="text" placeholder="Creator1, Creator2..." /></div>
                             <div class="form-group"><label>Verifier</label><input v-model="formData.verifier" type="text" required /></div>
                             <div class="form-group"><label>Video</label><input v-model="formData.verification" type="text" placeholder="https://youtu.be/..." required /></div>
+                            <div class="form-group"><label>In-Game Difficulty <span style="opacity:.6">(pick one or type your own)</span></label><input v-model="formData.inGameDifficulty" type="text" list="gd-diff-add" placeholder="e.g. Extreme Demon" /><datalist id="gd-diff-add"><option value="Easy Demon"></option><option value="Medium Demon"></option><option value="Hard Demon"></option><option value="Insane Demon"></option><option value="Extreme Demon"></option></datalist></div>
                             <div style="display:flex; gap:10px;">
                                 <div style="flex:1"><label>Percent</label><input v-model.number="formData.percentToQualify" type="number" min="0" max="100" required /></div>
                                 <div style="flex:1"><label>Placement</label><input v-model.number="formData.placement" type="number" :placeholder="'Max: ' + maxPlacement" /></div>
@@ -420,6 +422,7 @@ template: `
                         <div><label>Verifier</label><input v-model="editingLevel.verifier"></div>
                         <div><label>ID</label><input v-model.number="editingLevel.id"></div>
                         <div><label>Video</label><input v-model="editingLevel.verification"></div>
+                        <div><label>In-Game Difficulty <span style="opacity:.6">(pick one or type your own)</span></label><input v-model="editingLevel.inGameDifficulty" type="text" list="gd-diff-edit" placeholder="e.g. Extreme Demon"><datalist id="gd-diff-edit"><option value="Easy Demon"></option><option value="Medium Demon"></option><option value="Hard Demon"></option><option value="Insane Demon"></option><option value="Extreme Demon"></option></datalist></div>
                         <div><label>Percent</label><input v-model="editingLevel.percentToQualify"></div>
                     </div>
                     <h3 style="margin-top:2rem;">Records</h3>
@@ -507,7 +510,7 @@ template: `
             targetRank: null,
             isEditingLevelMobile: false,
 
-            levelsList: [], searchQuery: '', formData: { id: null, name: '', author: '', verifier: '', verification: '', percentToQualify: 100, password: 'free Copyable', records: [], creators: [], creatorsText: '', placement: null },
+            levelsList: [], searchQuery: '', formData: { id: null, name: '', author: '', verifier: '', verification: '', percentToQualify: 100, inGameDifficulty: '', records: [], creators: [], creatorsText: '', placement: null },
             showRecords: false, isSubmitting: false, successMessage: '', errorMessage: '',
 
             packsList: [],
@@ -1289,7 +1292,7 @@ template: `
                 if (res.status === 401) { this.logout(); return; }
                 if (res.ok) {
                     this.successMessage = "Added!";
-                    this.formData = { id: null, name: '', author: '', verifier: '', verification: '', percentToQualify: 100, password: 'free Copyable', records: [], creators: [], creatorsText: '', placement: null };
+                    this.formData = { id: null, name: '', author: '', verifier: '', verification: '', percentToQualify: 100, inGameDifficulty: '', records: [], creators: [], creatorsText: '', placement: null };
                     await this.refreshLevels();
                     this.isMobileSidebarOpen = false;
                 } else {
