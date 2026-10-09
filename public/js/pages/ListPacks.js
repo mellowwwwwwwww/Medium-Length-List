@@ -174,7 +174,7 @@ export default {
                                 <p class="type-body">{{ selectedLevel.id }}</p>
                             </li>
                             <li>
-                                <div class="type-title-sm">In-Game Difficulty</div>
+                                <div class="type-title-sm">Difficulty</div>
                                 <p class="type-body">{{ selectedLevel.inGameDifficulty || 'Not set' }}</p>
                             </li>
                         </ul>
