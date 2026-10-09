@@ -1,5 +1,5 @@
 import { store } from "../main.js";
-import { embed } from "../util.js";
+import { embed, localize } from "../util.js";
 import { score } from "../score.js";
 import { fetchEditors, fetchList, fetchRules, fetchPacks } from "../content.js";
 import { LIST1, LIST2 } from "../config.js";
@@ -218,8 +218,8 @@ export default {
 
                         <ul class="stats">
                             <li>
-                                <div class="type-title-sm">Points when completed</div>
-                                <p class="type-body">{{ score(selected + 1, 100, level.percentToQualify) }}</p>
+                                <div class="type-title-sm">Points</div>
+                                <p class="type-body">{{ localize(score(selected + 1, 100, level.percentToQualify)) }}</p>
                             </li>
                             <li>
                                 <div class="type-title-sm">ID</div>
@@ -511,6 +511,7 @@ export default {
     methods: {
         embed,
         score,
+        localize,
         scrollToTop() {
             window.scrollTo(0, 0);
         },
