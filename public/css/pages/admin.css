@@ -1834,3 +1834,32 @@
         color: var(--color-text-secondary);
     }
 }
+
+
+/* Private "List Placement" note shown under a level's name in the admin list */
+.staff-note {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    font-weight: normal;
+    line-height: 1.35;
+    color: var(--color-text-secondary);
+    opacity: 0.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.staff-note-mobile {
+    display: none;
+}
+
+@media screen and (max-width: 768px) {
+    .staff-note-mobile {
+        display: -webkit-box;
+        margin-top: 2px;
+        margin-bottom: 0.5rem;
+    }
+}
