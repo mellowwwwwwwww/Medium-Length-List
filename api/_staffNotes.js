@@ -1,5 +1,9 @@
 import { query } from './_db.js';
 
+// Private staff-only notes ("List Placement"), kept in their own table so the public
+// levels API can never return them. Only /api/staff-notes (login required) reads them.
+let tableReady = false;
+
 export async function ensureStaffNotesTable() {
     if (tableReady) return;
     await query(`
@@ -11,6 +15,7 @@ export async function ensureStaffNotesTable() {
             PRIMARY KEY (list_type, level_id)
         )
     `);
+    // Block Supabase's public REST API from reading this table (the site itself connects directly).
     await query(`ALTER TABLE public.level_staff_notes ENABLE ROW LEVEL SECURITY`);
     tableReady = true;
 }
