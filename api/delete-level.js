@@ -1,6 +1,7 @@
 import { verifyToken, auditLog } from './_utils.js';
 import { query } from './_db.js';
 import { LIST1, LIST2 } from './_config.js';
+import { deleteStaffNote } from './_staffNotes.js';
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -33,6 +34,7 @@ export default async function handler(req, res) {
 
         // Delete the level
         await query(`DELETE FROM ${tableName} WHERE id = $1`, [id]);
+        try { await deleteStaffNote(type === LIST2 ? LIST2 : LIST1, id); } catch (e) { console.error('Could not remove staff note:', e); }
 
         const normalizeQuery = `
             WITH RankedLevels AS (
