@@ -1,6 +1,7 @@
 import { verifyToken, auditLog } from './_utils.js';
 import { query } from './_db.js';
 import { LIST1, LIST2 } from './_config.js';
+import { saveStaffNote } from './_staffNotes.js';
 
 function sanitizeRecords(records) {
     if (!Array.isArray(records)) return [];
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
 
     try {
         const decoded = await verifyToken(req);
-        const { levelData, placement, type } = req.body;
+        const { levelData, placement, type, staffNote } = req.body;
 
         if (!levelData || !levelData.name) return res.status(400).json({ error: 'Missing level data or name' });
 
@@ -42,6 +43,7 @@ export default async function handler(req, res) {
         const listName = type === LIST2 ? LIST2 : LIST1;
         const tableName = type === LIST2 ? 'public.levels_2' : 'public.levels';
         const realName = levelData.name;
+        delete levelData.staffNote; // private notes never go into the public level data
 
         if (levelData.records) {
             levelData.records = sanitizeRecords(levelData.records);
@@ -58,10 +60,18 @@ export default async function handler(req, res) {
         await query(`UPDATE ${tableName} SET rank = rank + 1 WHERE rank >= $1`, [targetRank]);
 
         // Insert the new level
-        await query(
-            `INSERT INTO ${tableName} (name, rank, data) VALUES ($1, $2, $3)`,
+        const insertResult = await query(
+            `INSERT INTO ${tableName} (name, rank, data) VALUES ($1, $2, $3) RETURNING id`,
             [realName, targetRank, levelData]
         );
+
+        if (staffNote && String(staffNote).trim()) {
+            try {
+                await saveStaffNote(listName, insertResult.rows[0].id, staffNote);
+            } catch (noteError) {
+                console.error('Could not save staff note:', noteError);
+            }
+        }
 
         const normalizeQuery = `
             WITH RankedLevels AS (
