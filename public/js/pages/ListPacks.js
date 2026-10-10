@@ -154,7 +154,7 @@ export default {
                     <div class="level" v-if="selectedLevel">
                         <h1 class="type-h1">{{ selectedLevel.name }}</h1>
                         
-                        <LevelAuthors :author="selectedLevel.author" :creators="selectedLevel.creators || []" :verifier="selectedLevel.verifier"></LevelAuthors>
+                        <LevelAuthors :author="selectedLevel.author" :creators="selectedLevel.creators || []" :verifier="selectedLevel.verifier" :verifier-unknown="selectedLevel.verifierUnknown"></LevelAuthors>
                         
                         <p class="warning-lable type-label-md" v-if="selectedLevel.epilepsyWarning">
                             WARNING! Levels AND videos may be epileptic
@@ -174,7 +174,7 @@ export default {
                                 <p class="type-body">{{ selectedLevel.id }}</p>
                             </li>
                             <li>
-                                <div class="type-title-sm">Difficulty</div>
+                                <div class="type-title-sm">In-Game Difficulty</div>
                                 <p class="type-body">{{ selectedLevel.inGameDifficulty || 'Not set' }}</p>
                             </li>
                         </ul>
