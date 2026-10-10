@@ -10,7 +10,11 @@ export default {
         },
         verifier: {
             type: String,
-            required: true,
+            default: '',
+        },
+        verifierUnknown: {
+            type: Boolean,
+            default: false,
         },
     },
     template: `
@@ -28,7 +32,7 @@ export default {
                 </p>
                 <div class="type-title-sm">Verifier</div>
                 <p class="type-body">
-                    <span>{{ verifier }}</span>
+                    <span>{{ verifierLabel }}</span>
                 </p>
             </template>
             <template v-else>
@@ -40,7 +44,7 @@ export default {
                 </p>
                 <div class="type-title-sm">Verifier</div>
                 <p class="type-body">
-                    <span>{{ verifier }}</span>
+                    <span>{{ verifierLabel }}</span>
                 </p>
             </template>
             <div class="type-title-sm">Publisher</div>
@@ -54,8 +58,11 @@ export default {
         formattedAuthor() {
             return Array.isArray(this.author) ? this.author.join(', ') : this.author;
         },
+        verifierLabel() {
+            return this.verifierUnknown || !this.verifier ? 'Unknown' : this.verifier;
+        },
         selfVerified() {
-            return this.formattedAuthor === this.verifier && this.creators.length === 0;
+            return !this.verifierUnknown && !!this.verifier && this.formattedAuthor === this.verifier && this.creators.length === 0;
         },
     },
 };
