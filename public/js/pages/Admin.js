@@ -111,6 +111,7 @@ template: `
                         <div class="form-group"><label>Video</label><input v-model="editingLevel.verification"></div>
                         <div class="form-group"><label>Difficulty</label><input v-model="editingLevel.inGameDifficulty" type="text" list="gd-diff-edit-m" placeholder="e.g. Extreme Demon"><datalist id="gd-diff-edit-m"><option value="Easy Demon"></option><option value="Medium Demon"></option><option value="Hard Demon"></option><option value="Insane Demon"></option><option value="Extreme Demon"></option></datalist></div>
                         <div class="form-group"><label>Percent</label><input v-model="editingLevel.percentToQualify"></div>
+                        <div class="form-group"><label>List Placement</label><textarea v-model="editingLevel.staffNote" rows="3" :disabled="userRole === 'mod'"></textarea></div>
                         
                         <h3 style="margin-top:1.5rem; font-size: 1rem; border-bottom: 1px solid var(--color-border); padding-bottom: 5px;">Records</h3>
                         <div v-for="(record, index) in editingLevel.records" :key="index" class="edit-record-row">
@@ -148,6 +149,7 @@ template: `
                                 <div style="flex:1"><label>Percent</label><input v-model.number="formData.percentToQualify" type="number" min="0" max="100" required /></div>
                                 <div style="flex:1"><label>Placement</label><input v-model.number="formData.placement" type="number" :placeholder="'Max: ' + maxPlacement" /></div>
                             </div>
+                            <div class="form-group"><label>List Placement</label><textarea v-model="formData.staffNote" rows="3"></textarea></div>
                             <button type="button" @click="toggleRecordSection" class="btn-toggle">{{ showRecords ? '▼ Hide Records' : '► Add Initial Records' }}</button>
                             <div v-if="showRecords" class="records-section">
                                 <div v-for="(record, index) in formData.records" :key="index" class="record-item">
@@ -424,6 +426,7 @@ template: `
                         <div><label>Video</label><input v-model="editingLevel.verification"></div>
                         <div><label>Difficulty</label><input v-model="editingLevel.inGameDifficulty" type="text" list="gd-diff-edit" placeholder="e.g. Extreme Demon"><datalist id="gd-diff-edit"><option value="Easy Demon"></option><option value="Medium Demon"></option><option value="Hard Demon"></option><option value="Insane Demon"></option><option value="Extreme Demon"></option></datalist></div>
                         <div><label>Percent</label><input v-model="editingLevel.percentToQualify"></div>
+                        <div><label>List Placement</label><textarea v-model="editingLevel.staffNote" rows="3" :disabled="userRole === 'mod'"></textarea></div>
                     </div>
                     <h3 style="margin-top:2rem;">Records</h3>
                     <div v-for="(record, index) in editingLevel.records" :key="index" class="edit-record-row">
@@ -510,7 +513,7 @@ template: `
             targetRank: null,
             isEditingLevelMobile: false,
 
-            levelsList: [], searchQuery: '', formData: { id: null, name: '', author: '', verifier: '', verifierUnknown: false, verification: '', percentToQualify: 100, inGameDifficulty: '', records: [], creators: [], creatorsText: '', placement: null },
+            levelsList: [], staffNotes: {}, searchQuery: '', formData: { id: null, name: '', author: '', verifier: '', verifierUnknown: false, verification: '', percentToQualify: 100, inGameDifficulty: '', staffNote: '', records: [], creators: [], creatorsText: '', placement: null },
             showRecords: false, isSubmitting: false, successMessage: '', errorMessage: '',
 
             packsList: [],
@@ -1037,12 +1040,22 @@ template: `
             }
         },
 
+        async loadStaffNotes() {
+            try {
+                const res = await fetch(`/api/staff-notes?type=${encodeURIComponent(this.store.listType)}`, { headers: this.getAuthHeaders() });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.staffNotes = data.notes || {};
+                }
+            } catch (e) { }
+        },
         async refreshLevels() {
             try {
                 const list = await fetchList(this.store.listType, true);
                 if (list) this.levelsList = list.map((l) => l[0]).filter(l => l);
             } catch (e) {
             }
+            await this.loadStaffNotes();
         },
         async refreshPacks() {
             try {
@@ -1281,9 +1294,12 @@ template: `
             delete levelData.creatorsText;
             levelData.verifierUnknown = !!levelData.verifierUnknown;
             levelData.verifier = levelData.verifierUnknown ? '' : String(levelData.verifier || '').trim();
+            const staffNote = String(levelData.staffNote || '').trim();
+            delete levelData.staffNote; // private: sent separately, never stored with the public level data
 
             const payload = {
                 levelData: levelData,
+                staffNote: staffNote,
                 placement: this.formData.placement,
                 type: this.store.listType
             };
@@ -1294,7 +1310,7 @@ template: `
                 if (res.status === 401) { this.logout(); return; }
                 if (res.ok) {
                     this.successMessage = "Added!";
-                    this.formData = { id: null, name: '', author: '', verifier: '', verifierUnknown: false, verification: '', percentToQualify: 100, inGameDifficulty: '', records: [], creators: [], creatorsText: '', placement: null };
+                    this.formData = { id: null, name: '', author: '', verifier: '', verifierUnknown: false, verification: '', percentToQualify: 100, inGameDifficulty: '', staffNote: '', records: [], creators: [], creatorsText: '', placement: null };
                     await this.refreshLevels();
                     this.isMobileSidebarOpen = false;
                 } else {
@@ -1403,6 +1419,7 @@ template: `
             this.editingRecordsLevel = level;
             this.editingLevel = JSON.parse(JSON.stringify(level));
             this.editingLevel.creatorsText = (Array.isArray(level.creators) ? level.creators : []).join(', ');
+            this.editingLevel.staffNote = this.staffNotes[level._id] || '';
             if (!this.editingLevel.records) this.editingLevel.records = [];
             
             if (window.innerWidth <= 1024) {
@@ -1424,7 +1441,7 @@ template: `
         },
 
         addEditingRecord() { this.editingLevel.records.push({ user: '', link: '', percent: 100, hz: 60 }); },
-        async saveEditLevel() { this.isSavingRecords = true; this.editRecordsMessage = ''; this.editRecordsError = false; let newLevelData = { ...this.editingLevel }; delete newLevelData._id; delete newLevelData.rank; newLevelData.author = Array.isArray(newLevelData.author) ? newLevelData.author.join(', ') : String(newLevelData.author || '').trim(); newLevelData.creators = this.parseNameList(newLevelData.creatorsText); delete newLevelData.creatorsText; newLevelData.verifierUnknown = !!newLevelData.verifierUnknown; newLevelData.verifier = newLevelData.verifierUnknown ? '' : String(newLevelData.verifier || '').trim(); try { const res = await fetch('/api/update-records', { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify({ oldLevelId: this.editingRecordsLevel._id, newLevelData: newLevelData, type: this.store.listType }) }); if (res.status === 401) { this.logout(); return; } const data = await res.json(); if (res.ok) { this.editRecordsMessage = data.message || '✓ Level updated successfully'; this.editRecordsError = false; await new Promise(resolve => setTimeout(resolve, 1500)); await this.refreshLevels(); this.closeEditRecordsModal(); } else { this.editRecordsMessage = data.error || 'Failed to update level'; this.editRecordsError = true; } } catch (e) { this.editRecordsMessage = e.message || 'An error occurred'; this.editRecordsError = true; } finally { this.isSavingRecords = false; } },
+        async saveEditLevel() { this.isSavingRecords = true; this.editRecordsMessage = ''; this.editRecordsError = false; let newLevelData = { ...this.editingLevel }; delete newLevelData._id; delete newLevelData.rank; newLevelData.author = Array.isArray(newLevelData.author) ? newLevelData.author.join(', ') : String(newLevelData.author || '').trim(); newLevelData.creators = this.parseNameList(newLevelData.creatorsText); delete newLevelData.creatorsText; newLevelData.verifierUnknown = !!newLevelData.verifierUnknown; newLevelData.verifier = newLevelData.verifierUnknown ? '' : String(newLevelData.verifier || '').trim(); const staffNote = newLevelData.staffNote; delete newLevelData.staffNote; try { const res = await fetch('/api/update-records', { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify({ oldLevelId: this.editingRecordsLevel._id, newLevelData: newLevelData, staffNote: this.userRole === 'mod' ? undefined : String(staffNote || ''), type: this.store.listType }) }); if (res.status === 401) { this.logout(); return; } const data = await res.json(); if (res.ok) { this.editRecordsMessage = data.message || '✓ Level updated successfully'; this.editRecordsError = false; await new Promise(resolve => setTimeout(resolve, 1500)); await this.refreshLevels(); this.closeEditRecordsModal(); } else { this.editRecordsMessage = data.error || 'Failed to update level'; this.editRecordsError = true; } } catch (e) { this.editRecordsMessage = e.message || 'An error occurred'; this.editRecordsError = true; } finally { this.isSavingRecords = false; } },
 
         async openVipsModal() {
             this.showVipsModal = true;
