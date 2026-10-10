@@ -106,7 +106,7 @@ template: `
                         <div class="form-group"><label>Name</label><input v-model="editingLevel.name"></div>
                         <div class="form-group"><label>Author</label><input v-model="editingLevel.author"></div>
                         <div class="form-group"><label>Creators</label><input v-model="editingLevel.creatorsText" type="text" placeholder="Creator1, Creator2..." /></div>
-                        <div class="form-group"><label>Verifier</label><input v-model="editingLevel.verifier"></div>
+                        <div class="form-group"><label>Verifier</label><input v-model="editingLevel.verifier" :disabled="editingLevel.verifierUnknown" :placeholder="editingLevel.verifierUnknown ? 'Unknown' : ''"><label class="toggle-switch" style="margin-top:0.75rem;"><span class="label-text">Verifier unknown</span><input type="checkbox" v-model="editingLevel.verifierUnknown" class="checkboxswitch"><span class="slider"></span></label></div>
                         <div class="form-group"><label>ID</label><input v-model.number="editingLevel.id"></div>
                         <div class="form-group"><label>Video</label><input v-model="editingLevel.verification"></div>
                         <div class="form-group"><label>Difficulty</label><input v-model="editingLevel.inGameDifficulty" type="text" list="gd-diff-edit-m" placeholder="e.g. Extreme Demon"><datalist id="gd-diff-edit-m"><option value="Easy Demon"></option><option value="Medium Demon"></option><option value="Hard Demon"></option><option value="Insane Demon"></option><option value="Extreme Demon"></option></datalist></div>
@@ -141,7 +141,7 @@ template: `
                             <div class="form-group"><label>ID</label><input v-model.number="formData.id" type="number" required /></div>
                             <div class="form-group"><label>Author</label><input v-model="formData.author" type="text" placeholder="Publisher account name" required /></div>
                             <div class="form-group"><label>Creators</label><input v-model="formData.creatorsText" type="text" placeholder="Creator1, Creator2..." /></div>
-                            <div class="form-group"><label>Verifier</label><input v-model="formData.verifier" type="text" required /></div>
+                            <div class="form-group"><label>Verifier</label><input v-model="formData.verifier" type="text" :required="!formData.verifierUnknown" :disabled="formData.verifierUnknown" :placeholder="formData.verifierUnknown ? 'Unknown' : ''" /><label class="toggle-switch" style="margin-top:0.75rem;"><span class="label-text">Verifier unknown</span><input type="checkbox" v-model="formData.verifierUnknown" class="checkboxswitch"><span class="slider"></span></label></div>
                             <div class="form-group"><label>Video</label><input v-model="formData.verification" type="text" placeholder="https://youtu.be/..." required /></div>
                             <div class="form-group"><label>Difficulty</label><input v-model="formData.inGameDifficulty" type="text" list="gd-diff-add" placeholder="e.g. Extreme Demon" /><datalist id="gd-diff-add"><option value="Easy Demon"></option><option value="Medium Demon"></option><option value="Hard Demon"></option><option value="Insane Demon"></option><option value="Extreme Demon"></option></datalist></div>
                             <div style="display:flex; gap:10px;">
@@ -419,7 +419,7 @@ template: `
                         <div><label>Name</label><input v-model="editingLevel.name"></div>
                         <div><label>Author</label><input v-model="editingLevel.author"></div>
                         <div><label>Creators</label><input v-model="editingLevel.creatorsText" placeholder="Creator1, Creator2..."></div>
-                        <div><label>Verifier</label><input v-model="editingLevel.verifier"></div>
+                        <div><label>Verifier</label><input v-model="editingLevel.verifier" :disabled="editingLevel.verifierUnknown" :placeholder="editingLevel.verifierUnknown ? 'Unknown' : ''"><label class="toggle-switch" style="margin-top:0.75rem;"><span class="label-text">Verifier unknown</span><input type="checkbox" v-model="editingLevel.verifierUnknown" class="checkboxswitch"><span class="slider"></span></label></div>
                         <div><label>ID</label><input v-model.number="editingLevel.id"></div>
                         <div><label>Video</label><input v-model="editingLevel.verification"></div>
                         <div><label>Difficulty</label><input v-model="editingLevel.inGameDifficulty" type="text" list="gd-diff-edit" placeholder="e.g. Extreme Demon"><datalist id="gd-diff-edit"><option value="Easy Demon"></option><option value="Medium Demon"></option><option value="Hard Demon"></option><option value="Insane Demon"></option><option value="Extreme Demon"></option></datalist></div>
@@ -510,7 +510,7 @@ template: `
             targetRank: null,
             isEditingLevelMobile: false,
 
-            levelsList: [], searchQuery: '', formData: { id: null, name: '', author: '', verifier: '', verification: '', percentToQualify: 100, inGameDifficulty: '', records: [], creators: [], creatorsText: '', placement: null },
+            levelsList: [], searchQuery: '', formData: { id: null, name: '', author: '', verifier: '', verifierUnknown: false, verification: '', percentToQualify: 100, inGameDifficulty: '', records: [], creators: [], creatorsText: '', placement: null },
             showRecords: false, isSubmitting: false, successMessage: '', errorMessage: '',
 
             packsList: [],
@@ -1279,6 +1279,8 @@ template: `
             levelData.author = String(levelData.author || '').trim();
             levelData.creators = this.parseNameList(levelData.creatorsText);
             delete levelData.creatorsText;
+            levelData.verifierUnknown = !!levelData.verifierUnknown;
+            levelData.verifier = levelData.verifierUnknown ? '' : String(levelData.verifier || '').trim();
 
             const payload = {
                 levelData: levelData,
@@ -1292,7 +1294,7 @@ template: `
                 if (res.status === 401) { this.logout(); return; }
                 if (res.ok) {
                     this.successMessage = "Added!";
-                    this.formData = { id: null, name: '', author: '', verifier: '', verification: '', percentToQualify: 100, inGameDifficulty: '', records: [], creators: [], creatorsText: '', placement: null };
+                    this.formData = { id: null, name: '', author: '', verifier: '', verifierUnknown: false, verification: '', percentToQualify: 100, inGameDifficulty: '', records: [], creators: [], creatorsText: '', placement: null };
                     await this.refreshLevels();
                     this.isMobileSidebarOpen = false;
                 } else {
@@ -1422,7 +1424,7 @@ template: `
         },
 
         addEditingRecord() { this.editingLevel.records.push({ user: '', link: '', percent: 100, hz: 60 }); },
-        async saveEditLevel() { this.isSavingRecords = true; this.editRecordsMessage = ''; this.editRecordsError = false; let newLevelData = { ...this.editingLevel }; delete newLevelData._id; delete newLevelData.rank; newLevelData.author = Array.isArray(newLevelData.author) ? newLevelData.author.join(', ') : String(newLevelData.author || '').trim(); newLevelData.creators = this.parseNameList(newLevelData.creatorsText); delete newLevelData.creatorsText; try { const res = await fetch('/api/update-records', { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify({ oldLevelId: this.editingRecordsLevel._id, newLevelData: newLevelData, type: this.store.listType }) }); if (res.status === 401) { this.logout(); return; } const data = await res.json(); if (res.ok) { this.editRecordsMessage = data.message || '✓ Level updated successfully'; this.editRecordsError = false; await new Promise(resolve => setTimeout(resolve, 1500)); await this.refreshLevels(); this.closeEditRecordsModal(); } else { this.editRecordsMessage = data.error || 'Failed to update level'; this.editRecordsError = true; } } catch (e) { this.editRecordsMessage = e.message || 'An error occurred'; this.editRecordsError = true; } finally { this.isSavingRecords = false; } },
+        async saveEditLevel() { this.isSavingRecords = true; this.editRecordsMessage = ''; this.editRecordsError = false; let newLevelData = { ...this.editingLevel }; delete newLevelData._id; delete newLevelData.rank; newLevelData.author = Array.isArray(newLevelData.author) ? newLevelData.author.join(', ') : String(newLevelData.author || '').trim(); newLevelData.creators = this.parseNameList(newLevelData.creatorsText); delete newLevelData.creatorsText; newLevelData.verifierUnknown = !!newLevelData.verifierUnknown; newLevelData.verifier = newLevelData.verifierUnknown ? '' : String(newLevelData.verifier || '').trim(); try { const res = await fetch('/api/update-records', { method: 'POST', headers: this.getAuthHeaders(), body: JSON.stringify({ oldLevelId: this.editingRecordsLevel._id, newLevelData: newLevelData, type: this.store.listType }) }); if (res.status === 401) { this.logout(); return; } const data = await res.json(); if (res.ok) { this.editRecordsMessage = data.message || '✓ Level updated successfully'; this.editRecordsError = false; await new Promise(resolve => setTimeout(resolve, 1500)); await this.refreshLevels(); this.closeEditRecordsModal(); } else { this.editRecordsMessage = data.error || 'Failed to update level'; this.editRecordsError = true; } } catch (e) { this.editRecordsMessage = e.message || 'An error occurred'; this.editRecordsError = true; } finally { this.isSavingRecords = false; } },
 
         async openVipsModal() {
             this.showVipsModal = true;
