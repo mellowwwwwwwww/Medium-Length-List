@@ -201,7 +201,7 @@ export default {
                     <div class="level" v-if="level">
                         <h1 class="type-h1">{{ level.name }}</h1>
                         
-                        <LevelAuthors :author="level.author" :creators="level.creators || []" :verifier="level.verifier"></LevelAuthors>
+                        <LevelAuthors :author="level.author" :creators="level.creators || []" :verifier="level.verifier" :verifier-unknown="level.verifierUnknown"></LevelAuthors>
                         
                         <div class="pack-tags" v-if="currentLevelPacks.length > 0" style="display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0;">
                             <span v-for="pack in currentLevelPacks" 
@@ -226,7 +226,7 @@ export default {
                                 <p class="type-body">{{ level.id }}</p>
                             </li>
                             <li>
-                                <div class="type-title-sm">Difficulty</div>
+                                <div class="type-title-sm">In-Game Difficulty</div>
                                 <p class="type-body">{{ level.inGameDifficulty || 'Not set' }}</p>
                             </li>
                         </ul>
