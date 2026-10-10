@@ -1,4 +1,5 @@
 import { verifyToken, auditLog } from './_utils.js';
+import { saveStaffNote } from './_staffNotes.js';
 import { query } from './_db.js';
 import { LIST1, LIST2 } from './_config.js';
 import { randomUUID } from 'crypto';
@@ -639,7 +640,7 @@ async function handleUpdateRecords(req, res, decoded) {
             return res.status(403).json({ error: 'Only admins, mods, and owners can update records' });
         }
 
-        const { oldLevelId, newLevelData, type } = req.body;
+        const { oldLevelId, newLevelData, type, staffNote } = req.body;
         const tableName = type === LIST2 ? 'public.levels_2' : 'public.levels';
 
         if (!oldLevelId || !newLevelData) return res.status(400).json({ error: 'Missing Data' });
@@ -652,6 +653,7 @@ async function handleUpdateRecords(req, res, decoded) {
 
         const currentDBRow = findRes.rows[0];
         const oldContent = currentDBRow.data;
+        delete newLevelData.staffNote; // private notes never go into the public level data
 
         const updatedContent = {
             ...oldContent,
@@ -668,6 +670,14 @@ async function handleUpdateRecords(req, res, decoded) {
             `UPDATE ${tableName} SET data = $1, name = $2 WHERE id = $3`,
             [updatedContent, newName, oldLevelId]
         );
+
+        if (staffNote !== undefined && (decoded.role === 'admin' || decoded.role === 'management')) {
+            try {
+                await saveStaffNote(type === LIST2 ? LIST2 : LIST1, oldLevelId, staffNote);
+            } catch (noteError) {
+                console.error('Could not save staff note:', noteError);
+            }
+        }
 
         await auditLog(decoded, "EDIT_LEVEL", {
             oldLevel: oldContent,
