@@ -316,8 +316,9 @@ template: `
                                             <span class="mobile-name-inline"><strong>{{ level.name }}</strong></span>
                                             <span class="drag-handle" v-if="!searchQuery && userRole !== 'mod'">::</span>
                                         </div>
+                                        <div v-if="staffNotes[level._id]" class="staff-note staff-note-mobile" :title="staffNotes[level._id]">{{ staffNotes[level._id] }}</div>
                                     </td>
-                                    <td data-label="Name"><strong>{{ level.name }}</strong></td>
+                                    <td data-label="Name"><strong>{{ level.name }}</strong><div v-if="staffNotes[level._id]" class="staff-note" :title="staffNotes[level._id]">{{ staffNotes[level._id] }}</div></td>
                                     <td data-label="Records">{{ level.records?.length || 0 }}</td>
                                     <td class="actions">
                                         <button v-if="userRole !== 'mod' && !searchQuery" class="btn-icon mobile-order-btn" @click.stop="moveLevelUp(index)" :disabled="index === 0">↑</button>
