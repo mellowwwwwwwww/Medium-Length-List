@@ -189,8 +189,8 @@ export default {
                             <tr v-for="score in entry.verified">
                                 <td class="rank">
                                     <p class="type-label-lg">
-                                        <span :class="score.rank <= 150 ? 'goldhighlight' : ''" 
-                                              :style="score.rank > 150 ? 'color: var(--color-text-legacy); font-weight: 700;' : ''">
+                                        <span :class="score.rank <= LIST_SIZE ? 'goldhighlight' : ''" 
+                                              :style="score.rank > LIST_SIZE ? 'color: var(--color-text-legacy); font-weight: 700;' : ''">
                                             #{{ score.rank }}
                                         </span>
                                     </p>
@@ -200,8 +200,8 @@ export default {
                                 </td>
                                 <td class="score">
                                     <p class="type-body">
-                                        <span :class="score.rank <= 150 ? 'typle-label-pluspoint' : ''" 
-                                              :style="score.rank > 150 ? 'color: var(--color-text-minus)' : ''">
+                                        <span :class="score.rank <= LIST_SIZE ? 'typle-label-pluspoint' : ''" 
+                                              :style="score.rank > LIST_SIZE ? 'color: var(--color-text-minus)' : ''">
                                             +{{ localize(score.score) }}
                                         </span>
                                     </p>
@@ -214,8 +214,8 @@ export default {
                             <tr v-for="score in entry.completed">
                                 <td class="rank">
                                     <p class="type-label-lg">
-                                        <span :class="score.rank <= 150 ? 'goldhighlight' : ''" 
-                                              :style="score.rank > 150 ? 'color: var(--color-text-legacy); font-weight: 700;' : ''">
+                                        <span :class="score.rank <= LIST_SIZE ? 'goldhighlight' : ''" 
+                                              :style="score.rank > LIST_SIZE ? 'color: var(--color-text-legacy); font-weight: 700;' : ''">
                                             #{{ score.rank }}
                                         </span>
                                     </p>
@@ -225,8 +225,8 @@ export default {
                                 </td>
                                 <td class="score">
                                     <p class="type-body">
-                                        <span :class="score.rank <= 150 ? 'typle-label-pluspoint' : ''" 
-                                              :style="score.rank > 150 ? 'color: var(--color-text-minus)' : ''">
+                                        <span :class="score.rank <= LIST_SIZE ? 'typle-label-pluspoint' : ''" 
+                                              :style="score.rank > LIST_SIZE ? 'color: var(--color-text-minus)' : ''">
                                             +{{ localize(score.score) }}
                                         </span>
                                     </p>
@@ -239,8 +239,8 @@ export default {
                             <tr v-for="score in entry.progressed">
                                 <td class="rank">
                                     <p class="type-label-lg">
-                                        <span :class="score.rank <= 150 ? 'goldhighlight' : ''" 
-                                              :style="score.rank > 150 ? 'color: var(--color-text-legacy); font-weight: 700;' : ''">
+                                        <span :class="score.rank <= LIST_SIZE ? 'goldhighlight' : ''" 
+                                              :style="score.rank > LIST_SIZE ? 'color: var(--color-text-legacy); font-weight: 700;' : ''">
                                             #{{ score.rank }}
                                         </span>
                                     </p>
@@ -250,8 +250,8 @@ export default {
                                 </td>
                                 <td class="score">
                                     <p class="type-body">
-                                        <span :class="score.rank <= 150 ? 'typle-label-pluspoint' : ''" 
-                                              :style="score.rank > 150 ? 'color: var(--color-text-minus)' : ''">
+                                        <span :class="score.rank <= LIST_SIZE ? 'typle-label-pluspoint' : ''" 
+                                              :style="score.rank > LIST_SIZE ? 'color: var(--color-text-minus)' : ''">
                                             +{{ localize(score.score) }}
                                         </span>
                                     </p>
@@ -266,8 +266,8 @@ export default {
                             <tr v-for="score in entry.uncompleted">
                                 <td class="rank">
                                     <p class="type-label-lg">
-                                        <span :class="score.rank <= 150 ? 'goldhighlight' : ''" 
-                                              :style="score.rank > 150 ? 'color: var(--color-text-legacy); font-weight: 700;' : ''">
+                                        <span :class="score.rank <= LIST_SIZE ? 'goldhighlight' : ''" 
+                                              :style="score.rank > LIST_SIZE ? 'color: var(--color-text-legacy); font-weight: 700;' : ''">
                                             #{{ score.rank }}
                                         </span>
                                     </p>
