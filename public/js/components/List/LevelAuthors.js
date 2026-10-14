@@ -59,7 +59,7 @@ export default {
             return Array.isArray(this.author) ? this.author.join(', ') : this.author;
         },
         verifierLabel() {
-            return this.verifierUnknown || !this.verifier ? 'Unknown' : this.verifier;
+            return this.verifierUnknown || !this.verifier ? '-' : this.verifier;
         },
         selfVerified() {
             return !this.verifierUnknown && !!this.verifier && this.formattedAuthor === this.verifier && this.creators.length === 0;
