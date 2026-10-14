@@ -1,5 +1,6 @@
 import routes from './routes.js';
 import { LIST1, LIST2 } from './config.js';
+import { LIST_SIZE } from './score.js';
 
 export const store = Vue.reactive({
     dark: JSON.parse(localStorage.getItem('dark')) || false,
@@ -69,5 +70,6 @@ const app = Vue.createApp({
     }
 });
 
+app.config.globalProperties.LIST_SIZE = LIST_SIZE; // lets templates use LIST_SIZE directly
 app.use(router);
 app.mount('#app');
