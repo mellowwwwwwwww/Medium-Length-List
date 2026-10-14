@@ -308,8 +308,8 @@ template: `
                                     <td data-label="Level">
                                         <div class="rank-display-wrapper">
                                             <span 
-                                                :class="getOriginalIndex(level) <= 150 ? 'goldhighlight' : ''" 
-                                                :style="getOriginalIndex(level) > 150 ? 'color: var(--color-text-legacy)' : ''"
+                                                :class="getOriginalIndex(level) <= LIST_SIZE ? 'goldhighlight' : ''" 
+                                                :style="getOriginalIndex(level) > LIST_SIZE ? 'color: var(--color-text-legacy)' : ''"
                                             >
                                                 #{{ getOriginalIndex(level) }}
                                             </span>
