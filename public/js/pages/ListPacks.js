@@ -127,8 +127,8 @@ export default {
                         <tr v-for="(levelId, i) in selectedPack.levels" :key="levelId">
                             <td class="rank">
                                 <span class="type-label-lg" 
-                                      :class="{ 'goldhighlight': getLevelInfo(levelId).rank <= 150 }"
-                                      :style="getLevelInfo(levelId).rank > 150 ? 'color: var(--color-text-legacy)' : ''">
+                                      :class="{ 'goldhighlight': getLevelInfo(levelId).rank <= LIST_SIZE }"
+                                      :style="getLevelInfo(levelId).rank > LIST_SIZE ? 'color: var(--color-text-legacy)' : ''">
                                     #{{ getLevelInfo(levelId).rank }}
                                 </span>
                             </td>
@@ -165,7 +165,7 @@ export default {
                         <ul class="stats">
                             <li>
                                 <div class="type-title-sm">Points</div>
-                                <p class="type-body" :style="getLevelInfo(selectedLevel._id).rank > 150 ? 'color: var(--color-text-minus)' : ''">
+                                <p class="type-body" :style="getLevelInfo(selectedLevel._id).rank > LIST_SIZE ? 'color: var(--color-text-minus)' : ''">
                                     {{ localize(getLevelScore(selectedLevel._id)) }}
                                 </p>
                             </li>
