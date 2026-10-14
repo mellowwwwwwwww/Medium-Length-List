@@ -2,6 +2,7 @@ import { fetchList } from '../content.js';
 import { embed, shuffle } from '../util.js';
 import { store } from '../main.js';
 import { LIST1 } from '../config.js';
+import { LIST_SIZE, MAIN_LIST_END, EXTENDED_LIST_END } from '../score.js';
 
 import Spinner from '../components/Spinner.js';
 import Btn from '../components/Btn.js';
@@ -31,15 +32,19 @@ export default {
                                         <div class="sub-checks" v-if="useMLL">
                                             <div class="check" v-if="hasMLLMain">
                                                 <input type="checkbox" id="MLL_main" v-model="useMLLMain">
-                                                <label for="MLL_main" class="type-label-md">Main List (1-75)</label>
+                                                <label for="MLL_main" class="type-label-md">Main List (1-{{ mainEnd }})</label>
                                             </div>
                                             <div class="check" v-if="hasMLLExtended">
                                                 <input type="checkbox" id="MLL_ext" v-model="useMLLExtended">
-                                                <label for="MLL_ext" class="type-label-md">Extended List (76-150)</label>
+                                                <label for="MLL_ext" class="type-label-md">Extended List ({{ mainEnd + 1 }}-{{ extendedEnd }})</label>
                                             </div>
                                             <div class="check" v-if="hasMLLLegacy">
                                                 <input type="checkbox" id="MLL_leg" v-model="useMLLLegacy">
-                                                <label for="MLL_leg" class="type-label-md">Legacy List (>150)</label>
+                                                <label for="MLL_leg" class="type-label-md">Legacy List ({{ extendedEnd + 1 }}-{{ LIST_SIZE }})</label>
+                                            </div>
+                                            <div class="check" v-if="hasMLLDead">
+                                                <input type="checkbox" id="MLL_dead" v-model="useMLLDead">
+                                                <label for="MLL_dead" class="type-label-md">Dead List (>{{ LIST_SIZE }})</label>
                                             </div>
                                         </div>
                                     </div>
@@ -77,8 +82,8 @@ export default {
                                     <p class="type-label-md" style="opacity: 0.7; margin: 5px 0;">ID: {{ currentLevel.id }}</p>
                                     <p class="level-rank type-headline-sm">
                                         <span class="type-label-sm" style="opacity: 0.8; margin-right: 5px;">{{ currentLevel.listType }}</span>
-                                        <span :class="currentLevel.rank <= 150 ? 'goldhighlight' : ''" 
-                                              :style="currentLevel.rank > 150 ? 'color: var(--color-text-legacy)' : ''">
+                                        <span :class="currentLevel.rank <= LIST_SIZE ? 'goldhighlight' : ''" 
+                                              :style="currentLevel.rank > LIST_SIZE ? 'color: var(--color-text-legacy)' : ''">
                                             #{{ currentLevel.rank }}
                                         </span>
                                     </p>
@@ -137,8 +142,8 @@ export default {
                                 <div class="level-list-item faded" v-for="(level, i) in levels.slice(progression.length + 1, levels.length - currentPercentage + progression.length)">
                                     <div class="level-info">
                                         <span class="rank-tag type-label-sm" 
-                                              :class="level.rank <= 150 ? 'goldhighlight' : ''"
-                                              :style="level.rank > 150 ? 'color: var(--color-text-legacy)' : ''">
+                                              :class="level.rank <= LIST_SIZE ? 'goldhighlight' : ''"
+                                              :style="level.rank > LIST_SIZE ? 'color: var(--color-text-legacy)' : ''">
                                             {{ level.listType }} #{{ level.rank }}
                                         </span>
                                         <strong class="type-label-lg">
@@ -155,8 +160,8 @@ export default {
                                 <div class="level-list-item completed" v-for="(level, i) in levels.slice(0, progression.length).reverse()">
                                     <div class="level-info">
                                         <span class="rank-tag type-label-sm"
-                                              :class="level.rank <= 150 ? 'goldhighlight' : ''"
-                                              :style="level.rank > 150 ? 'color: var(--color-text-legacy)' : ''">
+                                              :class="level.rank <= LIST_SIZE ? 'goldhighlight' : ''"
+                                              :style="level.rank > LIST_SIZE ? 'color: var(--color-text-legacy)' : ''">
                                             {{ level.listType }} #{{ level.rank }}
                                         </span>
                                         <strong class="type-label-lg">
@@ -194,6 +199,9 @@ export default {
         useMLLMain: true,
         useMLLExtended: true,
         useMLLLegacy: true,
+        useMLLDead: true,
+        mainEnd: MAIN_LIST_END,
+        extendedEnd: EXTENDED_LIST_END,
 
         toasts: [],
         fileInput: undefined,
@@ -235,9 +243,10 @@ export default {
         }
     },
     computed: {
-        hasMLLMain() { return this.MLLLevels.some(l => l.rank <= 75); },
-        hasMLLExtended() { return this.MLLLevels.some(l => l.rank > 75 && l.rank <= 150); },
-        hasMLLLegacy() { return this.MLLLevels.some(l => l.rank > 150); },
+        hasMLLMain() { return this.MLLLevels.some(l => l.rank <= MAIN_LIST_END); },
+        hasMLLExtended() { return this.MLLLevels.some(l => l.rank > MAIN_LIST_END && l.rank <= EXTENDED_LIST_END); },
+        hasMLLLegacy() { return this.MLLLevels.some(l => l.rank > EXTENDED_LIST_END && l.rank <= LIST_SIZE); },
+        hasMLLDead() { return this.MLLLevels.some(l => l.rank > LIST_SIZE); },
 
 
         currentLevel() {
@@ -277,9 +286,10 @@ export default {
 
             if (this.useMLL) {
                 const MLLSubset = this.MLLLevels.filter(l => {
-                    if (l.rank <= 75) return this.useMLLMain;
-                    if (l.rank <= 150) return this.useMLLExtended;
-                    return this.useMLLLegacy;
+                    if (l.rank <= MAIN_LIST_END) return this.useMLLMain;
+                    if (l.rank <= EXTENDED_LIST_END) return this.useMLLExtended;
+                    if (l.rank <= LIST_SIZE) return this.useMLLLegacy;
+                    return this.useMLLDead;
                 });
                 pool.push(...MLLSubset);
             }
