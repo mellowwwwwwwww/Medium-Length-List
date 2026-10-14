@@ -2,6 +2,21 @@ const scale = 1;
 
 export const LIST_SIZE = 300;
 
+// The named sections of the list. Dividers are drawn from these automatically,
+// so a section only shows up once a level actually reaches that position.
+export const MAIN_LIST_END = 100;
+export const EXTENDED_LIST_END = 200;
+export const LIST_SECTIONS = [
+    { name: 'Main List', from: 1, to: MAIN_LIST_END },
+    { name: 'Extended List', from: MAIN_LIST_END + 1, to: EXTENDED_LIST_END },
+    { name: 'Legacy List', from: EXTENDED_LIST_END + 1, to: LIST_SIZE },
+    { name: 'Dead List', from: LIST_SIZE + 1, to: Infinity },
+];
+
+export function sectionOf(rank) {
+    return LIST_SECTIONS.find((section) => rank <= section.to) || LIST_SECTIONS[LIST_SECTIONS.length - 1];
+}
+
 const TOP_POINTS = 500;
 const BOTTOM_POINTS = 2;
 const DECAY = 3.54;
