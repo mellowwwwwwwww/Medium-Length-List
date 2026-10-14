@@ -1,6 +1,6 @@
 import { store } from "../main.js";
 import { embed, localize } from "../util.js";
-import { score } from "../score.js";
+import { score, sectionOf } from "../score.js";
 import { fetchEditors, fetchList, fetchRules, fetchPacks } from "../content.js";
 import { LIST1, LIST2 } from "../config.js";
 import { renderMarkdown } from "../markdown.js";
@@ -178,11 +178,15 @@ export default {
                         <button class="mobile-rules-btn" @click="mobileView = 'meta'; scrollToTop();">Rules</button>
                     </div>
                     <table class="list" v-if="list">
-                        <tr v-for="(item, i) in filteredList" :key="item.originalIndex">
+                        <template v-for="(item, i) in filteredList" :key="item.originalIndex">
+                        <tr v-if="sectionLabel(i)" class="section-row">
+                            <td colspan="2" class="section-label"><span>{{ sectionLabel(i) }}</span></td>
+                        </tr>
+                        <tr>
                             <td class="rank">
                                 <p class="type-label-lg">
-                                    <span :class="item.originalIndex + 1 <= 150 ? 'goldhighlight' : ''" 
-                                          :style="item.originalIndex + 1 > 150 ? 'color: var(--color-text-legacy); font-weight: 700;' : ''">
+                                    <span :class="item.originalIndex + 1 <= LIST_SIZE ? 'goldhighlight' : ''" 
+                                          :style="item.originalIndex + 1 > LIST_SIZE ? 'color: var(--color-text-legacy); font-weight: 700;' : ''">
                                         #{{ item.originalIndex + 1 }}
                                     </span>
                                 </p>
@@ -193,6 +197,7 @@ export default {
                                 </button>
                             </td>
                         </tr>
+                        </template>
                     </table>
                 </div>
                 
@@ -232,8 +237,8 @@ export default {
                         </ul>
                         <h2 class="type-headline-md">Records</h2>
                         
-                        <p class="type-body" v-if="selected + 1 <= 150"><strong>{{ level.percentToQualify || 100 }}%</strong> or better to qualify</p>
-                        <p class="type-body" v-else><strong>100%</strong> to qualify (Legacy)</p>                    
+                        <p class="type-body" v-if="selected + 1 <= LIST_SIZE"><strong>{{ level.percentToQualify || 100 }}%</strong> or better to qualify</p>
+                        <p class="type-body" v-else><strong>100%</strong> to qualify (Dead List)</p>                    
                         
                         <div ref="recordsWrapper" style="overflow: hidden;">
                             <table v-if="loadingRecords" class="records" style="width: 100%;">
@@ -511,6 +516,14 @@ export default {
     methods: {
         embed,
         score,
+        sectionLabel(i) {
+            const item = this.filteredList[i];
+            if (!item) return null;
+            const current = sectionOf(item.originalIndex + 1);
+            if (i === 0) return current.name;
+            const previous = sectionOf(this.filteredList[i - 1].originalIndex + 1);
+            return previous.name !== current.name ? current.name : null;
+        },
         localize,
         scrollToTop() {
             window.scrollTo(0, 0);
