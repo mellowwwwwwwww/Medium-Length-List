@@ -343,3 +343,32 @@
         gap: 1.25rem;
     }
 }
+
+
+/* Section dividers (Main List / Extended List / Legacy List / Dead List) */
+.page-list .list .section-row td {
+    padding: 18px 0 6px;
+    text-align: center;
+    border: 0;
+    background: none;
+}
+
+.page-list .list .section-row:first-child td {
+    padding-top: 6px;
+}
+
+.page-list .list .section-label span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+}
+
+.page-list .list .section-label span::before,
+.page-list .list .section-label span::after {
+    content: "\2013";
+}
